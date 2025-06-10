@@ -10,7 +10,7 @@ from src.models.order import PaymentStatus, Order
 from src.db.ekassa_client import EkassaClient
 from src.settings import settings
 from src.models.payment import Payment
-from src.db.http_client import UkassaClient
+from src.db.ukassa_client import UkassaClient
 from src.db.pg_client import db_session
 from src.schemes.products_response import ProductsResponse
 
@@ -158,7 +158,7 @@ async def create_payment_link(
         "timestamp": datetime.now().strftime("%d.%m.%Y %H:%M:%S"),
     }
 
-    async with EkassaClient.session(settings.EKASSA_BASE_URL) as session:
+    async with EkassaClient().session(settings.EKASSA_BASE_URL) as session:
         response = await session.request(
             'POST',
             f'fiscalorder/v4/{settings.EKASSA_GROUP_CODE}/sell',
@@ -175,7 +175,7 @@ async def create_payment_link(
 
 async def check_receipt_status(payment_id: str) -> PaymentStatus:
     assert payment_id
-    async with EkassaClient.session(settings.EKASSA_BASE_URL) as session:
+    async with EkassaClient().session(settings.EKASSA_BASE_URL) as session:
         response = await session.request(
             'GET',
             f'/fiscalorder/v4/{settings.EKASSA_GROUP_CODE}/report/{payment_id}'
@@ -194,14 +194,14 @@ async def check_receipt_status(payment_id: str) -> PaymentStatus:
             return PaymentStatus.NOT_PAYED
 
 
-async def check_payment_status(payment_id: str) -> PaymentStatus:
+async def check_payment_status(client: UkassaClient, payment_id: str) -> PaymentStatus:
     assert payment_id
-    async with UkassaClient.session(settings.UKASSA_BASE_URL) as session:
-        response = await session.request(
-            'GET',
-            f'payments/{str(payment_id)}',
-        )
-        status = response['status']
+    # async with UkassaClient().session(settings.UKASSA_BASE_URL) as session:
+    response = await client.request(
+        'GET',
+        f'payments/{str(payment_id)}',
+    )
+    status = response['status']
 
     match status:
         case 'pending':

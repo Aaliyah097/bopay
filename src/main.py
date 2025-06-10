@@ -13,9 +13,18 @@ from src.schemes.new_order_response import NewOrderResponse
 from src.models.payment import PaymentStatus
 from src.repository import check_order_status, get_products_list
 from src.schemes.products_response import ProductsResponse
+from contextlib import asynccontextmanager
+from src import monitor_payments
+import asyncio
 
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    asyncio.create_task(monitor_payments.main())
+    yield
+
+
+app = FastAPI(lifespan=lifespan)
 admin = Admin(
     app,
     pg_engine,

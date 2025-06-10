@@ -11,10 +11,9 @@ class EkassaClient:
     _token: str | None = None
     _decoded_token: str | None = None
 
-    @classmethod
-    async def _auth(cls) -> None:
-        assert cls.is_active()
-        async with cls._session.post(
+    async def _auth(self) -> None:
+        assert self.is_active()
+        async with self._session.post(
             'fiscalorder/v4/getToken',
             auth=BasicAuth(settings.EKASSA_LOGIN, settings.EKASSA_PASSWORD),
             json={
@@ -25,52 +24,47 @@ class EkassaClient:
             print(await response.text(), response.status)
             if response.status != 200:
                 response.raise_for_status()
-            cls._token = (await response.json())['token']
+            self._token = (await response.json())['token']
 
-        cls._decoded_token = jwt.decode(
-            cls._token,
+        self._decoded_token = jwt.decode(
+            self._token,
             options={"verify_signature": False}
         )
 
-    @classmethod
     async def request(
-        cls,
+        self,
         method: str,
         endpoint: str,
         **kwargs
     ) -> dict:
-        assert cls.is_active()
-        if not cls._is_token_alive():
-            await cls._auth()
+        assert self.is_active()
+        if not self._is_token_alive():
+            await self._auth()
 
-        async with cls._session.request(
+        async with self._session.request(
             method=method,
             url=endpoint,
-            headers={'token': cls._token},
+            headers={'token': self._token},
             **kwargs
         ) as response:
-            print(await response.text(), response.status)
             if response.status != 200:
+                print(await response.text(), response.status)
                 response.raise_for_status()
             return await response.json()
 
-    @classmethod
-    def _is_token_alive(cls) -> bool:
-        if not cls._token:
+    def _is_token_alive(self) -> bool:
+        if not self._token:
             return False
-        if cls._decoded_token['exp'] <= datetime.now().timestamp():
+        if self._decoded_token['exp'] <= datetime.now().timestamp():
             return False
         return True
 
-    @classmethod
-    def is_active(cls) -> bool:
-        return (cls._session is not None and not cls._session.closed)
+    def is_active(self) -> bool:
+        return (self._session is not None and not self._session.closed)
 
-    @classmethod
     @asynccontextmanager
-    async def session(cls, base_url: str) -> AsyncGenerator[type[Self], None]:
+    async def session(self, base_url: str) -> AsyncGenerator[type[Self], None]:
         async with ClientSession(base_url=base_url) as session:
-            cls._session = session
-            yield cls
-            await cls._session.close()
-            cls._session = None
+            self._session = session
+            yield self
+            self._session = None
