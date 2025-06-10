@@ -1,0 +1,24 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+aiohttp = "*"
+pydantic = {extras = ["extra"], version = "*"}
+pyjwt = {extras = ["crypto"], version = "*"}
+pydantic-settings = "*"
+alembic = "*"
+psycopg2-binary = "*"
+sqlalchemy = "*"
+fastapi = {extras = ["standard"], version = "*"}
+asyncpg = "*"
+aioredis = "*"
+ulid-py = "*"
+sqladmin = {extras = ["full"], version = "*"}
+itsdangerous = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.6"
