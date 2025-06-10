@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: bopay
+  labels:
+    app: bopay
+spec:
+  type: ClusterIP   # или NodePort/LoadBalancer, если нужен доступ извне
+  selector:
+    app: bopay
+  ports:
+    - name: http
+      port: 8000       # порт сервиса
+      targetPort: 8000 # порт контейнера

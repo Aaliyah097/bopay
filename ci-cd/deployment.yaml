@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bopay
+  labels:
+    app: bopay
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bopay
+  template:
+    metadata:
+      labels:
+        app: bopay
+    spec:
+      containers:
+        - name: bopay
+          image: aaliyah097/bopay:latest  # Тег будет заменён в пайплайне (например, на хэш коммита)
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - secretRef:
+                name: bopay
