@@ -17,8 +17,10 @@ aioredis = "*"
 ulid-py = "*"
 sqladmin = {extras = ["full"], version = "*"}
 itsdangerous = "*"
+hypercorn = "*"
+bcrypt = "*"
 
 [dev-packages]
 
 [requires]
-python_version = "3.6"
+python_version = "3.11"

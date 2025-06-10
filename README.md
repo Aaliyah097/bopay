@@ -63,3 +63,8 @@ COMPANY_WEBSITE_URL
 UKASSA_API_KEY  
 UKASSA_SHOP_ID  
 UKASSA_BASE_URL
+
+## запуск для разработки
+fastapi dev src/main.py
+
+## запуск для деплоя
