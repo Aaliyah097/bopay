@@ -31,7 +31,6 @@ async def get_unpaid_orders(session: AsyncSession) -> list[Order]:
                 (PaymentStatus.NOT_PAYED.value,
                  PaymentStatus.WAITING_FOR_CAPTURE.value)
             ),
-            Orders.status == OrderStatus.NEW.value,
             Orders.payment_id != None
         )
     )

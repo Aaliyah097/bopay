@@ -46,28 +46,45 @@ async def manage_orders():
         now = datetime.now()
         async with db_session() as session:
             for order, payment_status in zip(unpaid_orders, payment_statuses):
-                if not payment_status:
+                if payment_status is None:
                     continue
-                if payment_status == order.payment_status:
-                    continue
-                elif payment_status == PaymentStatus.WAITING_FOR_CAPTURE:
-                    if (now - order.created_at).total_seconds() > settings.PAYING_TIME_LIMIT_SEC:
+                if (
+                    payment_status in [PaymentStatus.WAITING_FOR_CAPTURE, PaymentStatus.NOT_PAYED] and
+                    (now - order.created_at).total_seconds() > settings.PAYING_TIME_LIMIT_SEC
+                ):
+                    try:
                         await cancel_payment(client, order.payment_id, order.id)
-                        await update_order(
-                            session,
-                            order.id,
-                            order_status=OrderStatus.CANCELED,
-                            cancel_reason='Истекло время на оплату',
-                            payment_status=payment_status
-                        )
-                    else:
+                    except Exception as exc:
+                        logger.error(exc)
+                        continue
+                    await update_order(
+                        session,
+                        order.id,
+                        order_status=OrderStatus.CANCELED,
+                        cancel_reason='Истекло время на оплату',
+                        payment_status=payment_status
+                    )
+                    continue
+                if payment_status == PaymentStatus.WAITING_FOR_CAPTURE:
+                    try:
                         await accept_payment(client, order.payment_id, order.id, order.sum_)
-                        await update_order(
-                            session,
-                            order.id,
-                            order_status=OrderStatus.PAYED,
-                            payment_status=payment_status
-                        )
+                    except Exception as exc:
+                        logger.error(exc)
+                        continue
+                    await update_order(
+                        session,
+                        order.id,
+                        order_status=OrderStatus.PAYED,
+                        payment_status=payment_status
+                    )
+                if payment_status == PaymentStatus.CANCELED:
+                    await update_order(
+                        session,
+                        order.id,
+                        order_status=OrderStatus.CANCELED,
+                        cancel_reason='Истекло время на оплату',
+                        payment_status=payment_status
+                    )
                 else:
                     await update_order(session, order.id, payment_status=payment_status)
 
