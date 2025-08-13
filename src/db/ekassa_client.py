@@ -21,7 +21,7 @@ class EkassaClient:
                 'pass': settings.EKASSA_PASSWORD
             }
         ) as response:
-            print(await response.text(), response.status)
+            print("Ekass auth", await response.text(), response.status)
             if response.status != 200:
                 response.raise_for_status()
             self._token = (await response.json())['token']
@@ -47,8 +47,8 @@ class EkassaClient:
             headers={'token': self._token},
             **kwargs
         ) as response:
+            print(f"Ekassa {endpoint}", await response.text(), response.status)
             if response.status != 200:
-                print(await response.text(), response.status)
                 response.raise_for_status()
             return await response.json()
 

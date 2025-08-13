@@ -26,16 +26,19 @@ async def new_order(request: CreateOrder) -> str:
                 price=products[idx].price
             ) for idx, product in enumerate(request.products)
         ]
+
         order = await create_order(
             session,
             request.user_id,
-            products=products
+            request.email,
+            products=products,
+            meta={'candidate_id': request.candidate_id}
         )
 
         payment = await create_payment_link(
+            amount=sum(product.sum_ for product in products),
             order_id=order.id,
-            email=request.email,
-            products=products
+            success_redirect_url=request.success_redirect_url
         )
 
         await update_order(session, order.id, payment.id)

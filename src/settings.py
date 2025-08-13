@@ -68,6 +68,11 @@ class CompanySettings(BaseSettings):
     COMPANY_WEBSITE_URL: str
 
 
+class BackendSettings(BaseSettings):
+    BACKEND_UNLOCK_CANDIDATE_URL: str
+    BACKEND_API_KEY: str
+
+
 class Settings(
     PGSettings,
     EKassaSettings,
@@ -75,9 +80,11 @@ class Settings(
     # RedisSettings,
     AdminSettings,
     CompanySettings,
-    UKassaSettings
+    UKassaSettings,
+    BackendSettings
 ):
     PAYMENT_MONITORING_INTERVAL_SEC: int = 3
+    PAYING_TIME_LIMIT_SEC: int = 15*60
     model_config = SettingsConfigDict(
         extra="allow",
     )

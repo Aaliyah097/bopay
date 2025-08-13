@@ -9,8 +9,8 @@ class ProductsAdmin(ModelView, model=Products):
 
 
 class OrdersAdmin(ModelView, model=Orders):
-    column_list = ['id', 'user_id', 'payment_id',
-                   'payment_status', 'created_at', 'updated_at']
+    column_list = ['id', 'user_id', 'user_email', 'meta', 'payment_id', 'receipt_id',
+                   'payment_status', 'status', 'cancel_reason', 'created_at', 'updated_at']
 
 
 class OrdersProductsAdmin(ModelView, model=OrdersProducts):

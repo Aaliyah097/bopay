@@ -21,8 +21,8 @@ class UkassaClient:
                            settings.UKASSA_API_KEY),
             ** kwargs
         ) as response:
+            print(f"Ukassa {endpoint}", await response.text(), response.status)
             if response.status != 200:
-                print(await response.text(), response.status)
                 response.raise_for_status()
             return await response.json()
 

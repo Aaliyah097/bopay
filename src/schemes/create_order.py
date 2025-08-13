@@ -8,5 +8,7 @@ class Product(BaseModel):
 
 class CreateOrder(BaseModel):
     user_id: int
+    candidate_id: int
     email: str
     products: list[Product]
+    success_redirect_url: str | None

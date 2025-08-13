@@ -14,13 +14,19 @@ from src.models.payment import PaymentStatus
 from src.repository import check_order_status, get_products_list
 from src.schemes.products_response import ProductsResponse
 from contextlib import asynccontextmanager
-from src import monitor_payments
+from src.workers import monitor_payments
+from src.workers import send_receipts
+from src.workers import provide_service
+from src.workers import finish_orders
 import asyncio
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     asyncio.create_task(monitor_payments.main())
+    asyncio.create_task(send_receipts.main())
+    asyncio.create_task(provide_service.main())
+    asyncio.create_task(finish_orders.main())
     yield
 
 

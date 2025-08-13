@@ -6,6 +6,7 @@ class PaymentStatus(IntEnum):
     PAYED = 1
     NOT_PAYED = 0
     CANCELED = -1
+    WAITING_FOR_CAPTURE = 2
 
 
 @dataclass
