@@ -14,32 +14,32 @@ from src.schemes.new_order_response import NewOrderResponse
 
 async def new_order(request: CreateOrder) -> str:
     async with db_session() as session:
-        products = await get_products_by_ids(
-            session,
-            [product.id for product in request.products]
-        )
-        if len(products) != len(request.products):
-            raise HTTPException(
-                status_code=422,
-                detail="Переданы несуществующие товары"
-            )
-
         user_active_orders = await get_user_active_order(
             session,
             request.user_id
         )
 
-        products = [
-            OrderProduct(
-                order_id=None,
-                product_id=products[idx].id,
-                name=products[idx].name,
-                quantity=product.quantity,
-                price=products[idx].price
-            ) for idx, product in enumerate(request.products)
-        ]
-
         if not user_active_orders:
+            products = await get_products_by_ids(
+                session,
+                [product.id for product in request.products]
+            )
+            if len(products) != len(request.products):
+                raise HTTPException(
+                    status_code=422,
+                    detail="Переданы несуществующие товары"
+                )
+
+            products = [
+                OrderProduct(
+                    order_id=None,
+                    product_id=products[idx].id,
+                    name=products[idx].name,
+                    quantity=product.quantity,
+                    price=products[idx].price
+                ) for idx, product in enumerate(request.products)
+            ]
+
             order = await create_order(
                 session,
                 request.user_id,
@@ -50,7 +50,7 @@ async def new_order(request: CreateOrder) -> str:
         else:
             order = user_active_orders[0]
         payment = await create_payment_link(
-            amount=sum(product.sum_ for product in products),
+            amount=order.sum_,
             order_id=order.id,
             success_redirect_url=request.success_redirect_url
         )
