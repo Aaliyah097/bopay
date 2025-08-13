@@ -14,27 +14,6 @@ from src.schemes.new_order_response import NewOrderResponse
 
 async def new_order(request: CreateOrder) -> str:
     async with db_session() as session:
-        user_active_orders = await get_user_active_order(
-            session,
-            request.user_id
-        )
-        if user_active_orders:
-            raise HTTPException(
-                status_code=409,
-                detail="Нельзя создать новый заказ пока есть хотя бы один активный"
-            )
-        # for active_order in user_active_orders:
-        #     if (
-        #         active_order.meta and
-        #         'candidate_id' in active_order.meta and
-        #         str(active_order.meta['candidate_id']) == str(
-        #             request.candidate_id)
-        #     ):
-        #         raise HTTPException(
-        #             status_code=409,
-        #             detail="Активный заказ с такой парой пользователей уже существует"
-        #         )
-
         products = await get_products_by_ids(
             session,
             [product.id for product in request.products]
@@ -44,6 +23,12 @@ async def new_order(request: CreateOrder) -> str:
                 status_code=422,
                 detail="Переданы несуществующие товары"
             )
+
+        user_active_orders = await get_user_active_order(
+            session,
+            request.user_id
+        )
+
         products = [
             OrderProduct(
                 order_id=None,
@@ -54,14 +39,16 @@ async def new_order(request: CreateOrder) -> str:
             ) for idx, product in enumerate(request.products)
         ]
 
-        order = await create_order(
-            session,
-            request.user_id,
-            request.email,
-            products=products,
-            meta={'candidate_id': request.candidate_id}
-        )
-
+        if not user_active_orders:
+            order = await create_order(
+                session,
+                request.user_id,
+                request.email,
+                products=products,
+                meta={'candidate_id': request.candidate_id}
+            )
+        else:
+            order = user_active_orders[0]
         payment = await create_payment_link(
             amount=sum(product.sum_ for product in products),
             order_id=order.id,
