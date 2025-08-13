@@ -31,6 +31,7 @@ async def get_unpaid_orders(session: AsyncSession) -> list[Order]:
                 (PaymentStatus.NOT_PAYED.value,
                  PaymentStatus.WAITING_FOR_CAPTURE.value)
             ),
+            Orders.status == OrderStatus.NEW.value,
             Orders.payment_id != None
         )
     )
@@ -181,3 +182,13 @@ async def get_products_list() -> list[ProductsResponse]:
         result = (await session.execute(query)).scalars().all()
 
     return [ProductsResponse(**row.to_dict()) for row in result]
+
+
+async def get_user_active_order(session: AsyncSession, user_id: int) -> list[Order]:
+    query = select(Orders).where(
+        and_(
+            Orders.user_id == int(user_id),
+            Orders.status == OrderStatus.NEW.value
+        )
+    )
+    return await _get_orders(session, query)
