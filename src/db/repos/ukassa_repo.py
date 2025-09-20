@@ -3,6 +3,12 @@ from src.db.ukassa_client import UkassaClient
 from src.settings import settings
 
 
+def repeat_payment_link(payment_id: str) -> str | None:
+    if not payment_id:
+        return None
+    return f"https://yoomoney.ru/checkout/payments/v2/contract?orderId={payment_id}"
+
+
 async def create_payment_link(
     amount: int,
     order_id: str,
