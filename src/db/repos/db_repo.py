@@ -5,7 +5,7 @@ from src.db.tables.products import Products
 from src.db.tables.orders import Orders
 from src.db.tables.orders_products import OrdersProducts
 from src.models.order import PaymentStatus, Order, OrderStatus
-from src.models.order import OrderStatus
+from src.models.order import OrderStatus, ReceiptStatus
 from src.db.pg_client import db_session
 from src.schemes.products_response import ProductsResponse
 
@@ -25,6 +25,7 @@ async def get_products_by_ids(session: AsyncSession, products_ids: list[str]) ->
 
 
 async def get_unpaid_orders(session: AsyncSession) -> list[Order]:
+    """Получить заказы которые ожидают оплаты"""
     query = select(Orders).where(
         and_(
             Orders.payment_status.in_(
@@ -41,9 +42,17 @@ async def get_unpaid_orders(session: AsyncSession) -> list[Order]:
 async def get_shipped_orders(session: AsyncSession) -> list[Order]:
     query = select(Orders).where(
         and_(
-            Orders.status == OrderStatus.PRODUCT_SHIPPPED.value,
-            Orders.payment_status == PaymentStatus.PAYED.value
+            Orders.status == OrderStatus.SHIPPPED.value,
+            Orders.payment_status == PaymentStatus.PAYED.value,
+            Orders.receipt_status == ReceiptStatus.NOT_SENT.value
         )
+    )
+    return await _get_orders(session, query)
+
+
+async def get_to_destroy_orders(session: AsyncSession) -> list[Order]:
+    query = select(Orders).where(
+        Orders.status == OrderStatus.TO_DESTROY.value
     )
     return await _get_orders(session, query)
 
@@ -51,8 +60,8 @@ async def get_shipped_orders(session: AsyncSession) -> list[Order]:
 async def get_paid_orders(session: AsyncSession) -> list[Order]:
     query = select(Orders).where(
         and_(
-            Orders.status == OrderStatus.PAYED.value,
-            Orders.payment_status == PaymentStatus.PAYED.value
+            Orders.status == OrderStatus.NEW.value,
+            Orders.payment_status == PaymentStatus.WAITING_FOR_CAPTURE.value
         )
     )
     return await _get_orders(session, query)
@@ -60,10 +69,7 @@ async def get_paid_orders(session: AsyncSession) -> list[Order]:
 
 async def get_orders_with_sent_checks(session: AsyncSession) -> list[Order]:
     query = select(Orders).where(
-        and_(
-            Orders.status == OrderStatus.RECEIPT_SENT.value,
-            Orders.payment_status == PaymentStatus.PAYED.value
-        )
+        Orders.receipt_status == ReceiptStatus.SENT.value
     )
     return await _get_orders(session, query)
 
@@ -78,6 +84,7 @@ async def _get_orders(session: AsyncSession, query: select) -> list[Order]:
             updated_at=order.updated_at,
             payment_id=order.payment_id,
             receipt_id=order.receipt_id,
+            receipt_status=order.receipt_status,
             payment_status=order.payment_status,
             meta=order.meta,
             products=[
@@ -99,6 +106,7 @@ async def update_order(
     payment_id: str | None = None,
     payment_status: PaymentStatus | None = None,
     order_status: OrderStatus | None = None,
+    receipt_status: ReceiptStatus | None = None,
     cancel_reason: str | None = None,
     receipt_id: str | None = None
 ) -> None:
@@ -113,6 +121,8 @@ async def update_order(
         payload['cancel_reason'] = cancel_reason
     if receipt_id:
         payload['receipt_id'] = receipt_id
+    if receipt_status:
+        payload['receipt_status'] = receipt_status.value
 
     if not payload:
         return
@@ -133,7 +143,8 @@ async def create_order(
     new_order = Orders(
         payment_id=None,
         receipt_id=None,
-        payment_status=PaymentStatus.NOT_PAYED,
+        payment_status=PaymentStatus.NOT_PAYED.value,
+        receipt_status=ReceiptStatus.NOT_SENT.value,
         user_id=user_id,
         user_email=user_email,
         meta=meta,
@@ -164,6 +175,7 @@ async def create_order(
         payment_id=None,
         receipt_id=None,
         payment_status=PaymentStatus.NOT_PAYED,
+        receipt_status=ReceiptStatus.NOT_SENT,
         products=products,
         meta=meta
     )
@@ -187,7 +199,7 @@ async def get_user_active_order(session: AsyncSession, user_id: int) -> list[Ord
     query = select(Orders).where(
         and_(
             Orders.user_id == int(user_id),
-            Orders.status == OrderStatus.NEW.value
+            Orders.payment_status == PaymentStatus.NOT_PAYED.value
         )
     )
     return await _get_orders(session, query)

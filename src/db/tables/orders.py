@@ -9,8 +9,9 @@ class Orders(Base):
 
     payment_id = Column(String, nullable=True)
     receipt_id = Column(String, nullable=True)
-    payment_status = Column(Integer, nullable=False, default=0)
+    payment_status = Column(String, nullable=False, default=0)
     status = Column(String, nullable=True)
+    receipt_status = Column(String, nullable=True)
     cancel_reason = Column(String, nullable=True)
     user_id = Column(Integer, nullable=False, index=True)
     user_email = Column(String, nullable=True)

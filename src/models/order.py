@@ -7,11 +7,15 @@ from enum import Enum
 
 class OrderStatus(Enum):
     NEW = 'new'
-    PAYED = 'payed'
-    PRODUCT_SHIPPPED = 'product_shipped'
-    RECEIPT_SENT = 'receipt_sent'
-    FINISHED = 'finished'
+    SHIPPPED = 'shipped'
+    TO_DESTROY = 'to_destroy'
     CANCELED = 'canceled'
+
+
+class ReceiptStatus(Enum):
+    NOT_SENT = 'not_sent'
+    SENT = 'sent'
+    DELIVERED = 'delivered'
 
 
 @dataclass
@@ -20,6 +24,7 @@ class Order(Entiy):
     user_email: str
     payment_id: str | None
     receipt_id: str | None
+    receipt_status: ReceiptStatus
     payment_status: PaymentStatus
     products: list[OrderProduct]
     meta: dict | None

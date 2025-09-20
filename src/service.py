@@ -10,6 +10,8 @@ from src.db.pg_client import db_session
 from fastapi import HTTPException
 from src.models.product import OrderProduct
 from src.schemes.new_order_response import NewOrderResponse
+from src.models.payment import PaymentStatus
+import logging
 
 
 async def new_order(request: CreateOrder) -> str:
@@ -49,11 +51,25 @@ async def new_order(request: CreateOrder) -> str:
             )
         else:
             order = user_active_orders[0]
-        payment = await create_payment_link(
-            amount=order.sum_,
-            order_id=order.id,
-            success_redirect_url=request.success_redirect_url
-        )
+
+        if order.payment_status not in [PaymentStatus.NOT_PAYED.value, PaymentStatus.NOT_PAYED]:
+            raise HTTPException(
+                status_code=400,
+                detail="Ссылка более недействительна"
+            )
+        try:
+            payment = await create_payment_link(
+                amount=order.sum_,
+                order_id=order.id,
+                success_redirect_url=request.success_redirect_url
+            )
+        except KeyError as exc:
+            logging.error(exc)
+            raise HTTPException(
+                status_code=400,
+                detail="Ссылка более недействительна"
+            )
+
 
         await update_order(session, order.id, payment.id)
 

@@ -16,17 +16,19 @@ from src.schemes.products_response import ProductsResponse
 from contextlib import asynccontextmanager
 from src.workers import monitor_payments
 from src.workers import send_receipts
-from src.workers import provide_service
-from src.workers import finish_orders
+from src.workers import ship_orders
+from src.workers import verify_receipts
+from src.workers import destroy_candidates
 import asyncio
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     asyncio.create_task(monitor_payments.main())
+    asyncio.create_task(ship_orders.main())
     asyncio.create_task(send_receipts.main())
-    asyncio.create_task(provide_service.main())
-    asyncio.create_task(finish_orders.main())
+    asyncio.create_task(verify_receipts.main())
+    asyncio.create_task(destroy_candidates.main())
     yield
 
 
@@ -57,7 +59,7 @@ app.add_middleware(
 )
 async def create_order(
     request: CreateOrder,
-    _=Depends(auth)
+    # _=Depends(auth)  # TODO
 ) -> str:
     # TODO сделать проверку юзер_ид при создании заказа с тем что в токене
     return await new_order(request)

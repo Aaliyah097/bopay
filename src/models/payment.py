@@ -1,12 +1,12 @@
 from dataclasses import dataclass
-from enum import IntEnum
+from enum import Enum
 
 
-class PaymentStatus(IntEnum):
-    PAYED = 1
-    NOT_PAYED = 0
-    CANCELED = -1
-    WAITING_FOR_CAPTURE = 2
+class PaymentStatus(Enum):
+    PAYED = 'paid'
+    NOT_PAYED = 'not_paid'
+    CANCELED = 'canceled'
+    WAITING_FOR_CAPTURE = 'waiting_for_capture'
 
 
 @dataclass

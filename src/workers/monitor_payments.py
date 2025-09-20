@@ -5,7 +5,6 @@ from src.repository import (
     update_order,
     get_unpaid_orders,
     cancel_payment,
-    accept_payment,
 )
 from src.db.pg_client import db_session
 from src.models.order import OrderStatus
@@ -39,50 +38,47 @@ async def manage_orders():
             *[
                 _with_semaphore_check_payment_status(client, order.payment_id)
                 for order in unpaid_orders
-            ]
+            ],
+            return_exceptions=True
         )
         assert len(unpaid_orders) == len(payment_statuses)
 
         now = datetime.now()
         async with db_session() as session:
             for order, payment_status in zip(unpaid_orders, payment_statuses):
-                if payment_status is None:
+                if payment_status is None or isinstance(payment_status, (Exception, BaseException)):
                     continue
                 if (
                     payment_status in [PaymentStatus.WAITING_FOR_CAPTURE, PaymentStatus.NOT_PAYED] and
                     (now - order.created_at).total_seconds() > settings.PAYING_TIME_LIMIT_SEC
                 ):
-                    try:
-                        await cancel_payment(client, order.payment_id, order.id)
-                    except Exception as exc:
-                        logger.error(exc)
-                        continue
+                    if payment_status == PaymentStatus.WAITING_FOR_CAPTURE:
+                        try:
+                            await cancel_payment(client, order.payment_id, order.id)
+                        except Exception as exc:
+                            logger.error(exc)
+                            continue
                     await update_order(
                         session,
                         order.id,
-                        order_status=OrderStatus.CANCELED,
+                        order_status=OrderStatus.TO_DESTROY,
                         cancel_reason='Истекло время на оплату',
                         payment_status=payment_status
                     )
                     continue
+                if str(payment_status) == str(order.payment_status):
+                    continue
                 if payment_status == PaymentStatus.WAITING_FOR_CAPTURE:
-                    try:
-                        await accept_payment(client, order.payment_id, order.id, order.sum_)
-                    except Exception as exc:
-                        logger.error(exc)
-                        continue
                     await update_order(
                         session,
                         order.id,
-                        order_status=OrderStatus.PAYED,
                         payment_status=payment_status
                     )
                 if payment_status == PaymentStatus.CANCELED:
                     await update_order(
                         session,
                         order.id,
-                        order_status=OrderStatus.CANCELED,
-                        cancel_reason='Истекло время на оплату',
+                        order_status=OrderStatus.TO_DESTROY,
                         payment_status=payment_status
                     )
                 else:

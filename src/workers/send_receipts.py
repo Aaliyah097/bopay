@@ -3,7 +3,7 @@ from src.settings import settings
 from src.db.pg_client import db_session
 from src.repository import get_shipped_orders, send_receipt, update_order
 from src.db.ekassa_client import EkassaClient
-from src.models.order import Order, OrderStatus
+from src.models.order import Order, OrderStatus, ReceiptStatus
 import logging
 
 
@@ -39,15 +39,16 @@ async def manage_orders():
             *[
                 _with_semaphore_send_receipt(client, order)
                 for order in shipped_orders
-            ]
+            ],
+            return_exceptions=True
         )
         assert len(shipped_orders) == len(receipts_ids)
 
     async with db_session() as session:
         for order, receipt_id in zip(shipped_orders, receipts_ids):
-            if not receipt_id:
+            if not receipt_id or isinstance(receipt_id, (Exception, BaseException)):
                 continue
-            await update_order(session, order.id, receipt_id=receipt_id, order_status=OrderStatus.RECEIPT_SENT)
+            await update_order(session, order.id, receipt_id=receipt_id, receipt_status=ReceiptStatus.SENT)
 
 
 async def main():

@@ -29,6 +29,7 @@ async def create_payment_link(
                 'Content-Type': 'application/json'
             },
         )
+    
     return Payment(
         id=response['id'],
         link=response['confirmation']['confirmation_url']
