@@ -53,15 +53,7 @@ async def new_order(request: CreateOrder) -> str:
             )
         else:
             order = user_active_orders[0]
-        
-        if order.status in [
-            OrderStatus.SHIPPPED.value, OrderStatus.SHIPPPED,
-            OrderStatus.CANCELED.value, OrderStatus.CANCELED
-        ]:
-            raise HTTPException(
-                status_code=400,
-                detail="Ссылка на оплату более недействительна"
-            )
+
         if order.payment_id:
             payment_link = repeat_payment_link(order.payment_id)
         else:
