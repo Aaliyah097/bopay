@@ -200,7 +200,7 @@ async def get_user_active_order(session: AsyncSession, user_id: int) -> list[Ord
         and_(
             Orders.user_id == int(user_id),
             Orders.payment_status == PaymentStatus.NOT_PAYED.value,
-            not Orders.status.in_([OrderStatus.SHIPPPED.value, OrderStatus.CANCELED.value])
+            Orders.status == OrderStatus.NEW.value
         )
     )
     return await _get_orders(session, query)
