@@ -181,7 +181,7 @@ async def create_order(
     )
 
 
-async def check_order_status(order_id: str) -> PaymentStatus | None:
+async def check_order_status(order_id: str) -> OrderStatus | None:
     query = select(Orders.status).where(Orders.id == order_id)
     async with db_session() as session:
         return (await session.execute(query)).scalar_one_or_none()

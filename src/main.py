@@ -11,6 +11,7 @@ from src.admin.auth import AdminAuth
 from src.settings import settings
 from src.schemes.new_order_response import NewOrderResponse
 from src.models.payment import PaymentStatus
+from src.models.product import OrderStatus
 from src.repository import check_order_status, get_products_list
 from src.schemes.products_response import ProductsResponse
 from contextlib import asynccontextmanager
@@ -68,7 +69,7 @@ async def create_order(
 @app.get(
     '/orders/{order_id}/status',
     summary="Узнать статус оплаты заказа",
-    response_model=PaymentStatus,
+    response_model=OrderStatus,
     responses={
         '200': {'descrition': 'OK'},
         '404': {'descrition': 'Заказ не найден'}
