@@ -4,7 +4,7 @@ from src.models.product import Product, OrderProduct
 from src.db.tables.products import Products
 from src.db.tables.orders import Orders
 from src.db.tables.orders_products import OrdersProducts
-from src.models.order import PaymentStatus, Order, OrderStatus
+from src.models.order import PaymentStatus, Order
 from src.models.order import OrderStatus, ReceiptStatus
 from src.db.pg_client import db_session
 from src.schemes.products_response import ProductsResponse

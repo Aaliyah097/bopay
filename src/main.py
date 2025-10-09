@@ -10,8 +10,7 @@ from src.admin.tables import ProductsAdmin, OrdersAdmin, OrdersProductsAdmin
 from src.admin.auth import AdminAuth
 from src.settings import settings
 from src.schemes.new_order_response import NewOrderResponse
-from src.models.payment import PaymentStatus
-from src.models.product import OrderStatus
+from src.models.order import OrderStatus
 from src.repository import check_order_status, get_products_list
 from src.schemes.products_response import ProductsResponse
 from contextlib import asynccontextmanager
