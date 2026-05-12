@@ -1,6 +1,17 @@
+import logging
+import os
+import sys
+
 from fastapi import FastAPI, Depends, Response
 from fastapi.middleware.cors import CORSMiddleware
 from src.schemes.create_order import CreateOrder
+
+logging.basicConfig(
+    level=os.environ.get("LOG_LEVEL", "INFO"),
+    format="%(asctime)s %(levelname)s %(name)s %(message)s",
+    stream=sys.stdout,
+    force=True,
+)
 from src.auth.actions import auth_router
 from src.auth.auth import auth
 from src.service import new_order
